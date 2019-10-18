@@ -1,7 +1,7 @@
 # cute
 Custom Table Editor - Alternative to SM30
 
-![cute Logo](/img/cute-logo.png)
+![cute Logo](/img/really-cute-logo.png)
 
 # abstract
 
