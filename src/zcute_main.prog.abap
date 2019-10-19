@@ -144,8 +144,6 @@ CLASS lcl_cute_tab_helper IMPLEMENTATION.
     DATA element_descr TYPE REF TO cl_abap_elemdescr.
     DATA field_descr TYPE dfies.
 
-*    data(view_components) = struc_edit_descr->get_included_view( ).
-
     LOOP AT components INTO DATA(component).
       TRY.
           element_descr ?= component-type.
