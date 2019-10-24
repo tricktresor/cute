@@ -1,53 +1,151 @@
 REPORT zcute_main.
 
 
-SELECTION-SCREEN COMMENT /1(80) cmt.
 PARAMETERS p_table TYPE typename DEFAULT 'ZCUTE_TEST'.
+PARAMETERS p_edit TYPE flag RADIOBUTTON GROUP m DEFAULT 'X' USER-COMMAND onli.
+PARAMETERS p_show TYPE flag RADIOBUTTON GROUP m .
 
-INCLUDE <cl_alv_control>.
 
 
-CLASS lcl_cute_main DEFINITION.
+CLASS lcl_main DEFINITION.
   PUBLIC SECTION.
-    CLASS-METHODS get_instance
+    METHODS pbo
       IMPORTING
-        source          TYPE typename
+        edit TYPE flag.
+    METHODS pai
+      IMPORTING
+        ucomm TYPE syucomm.
+    METHODS set_status.
+    METHODS ask_save_data
       RETURNING
-        VALUE(instance) TYPE REF TO zif_cute
-      RAISING
-        zcx_cute.
-  PROTECTED SECTION.
+        VALUE(result) TYPE flag.
 
+  PRIVATE SECTION.
+    DATA cc TYPE REF TO cl_gui_custom_container.
+    DATA cute  TYPE REF TO zif_cute.
 ENDCLASS.
 
+CLASS lcl_main IMPLEMENTATION.
+  METHOD pbo.
 
-CLASS lcl_cute_main IMPLEMENTATION.
-  METHOD get_instance.
+    set_status( ).
 
-    DATA(source_info) = zcl_cute_source_information=>get_instance( source ).
+    TRY.
+        cute = zcl_cute_main=>get_instance( p_table ).
+        IF cc IS INITIAL.
+          cc = NEW #( container_name = 'CC' ).
+        ENDIF.
 
-    CASE source_info->class.
-      WHEN 'TRANSP'.
-        instance = NEW zcl_cute_table_edit( ).
-        instance->set_source( source_info ).
-      WHEN 'VIEW'.
-        RAISE EXCEPTION TYPE zcx_cute_unsupported_category.
+        cute->set_container( cc ).
+        IF edit = abap_true.
+          cute->edit( ).
+        ELSE.
+          cute->show( ).
+        ENDIF.
+
+        cl_gui_container=>set_focus( cc ).
+
+      CATCH zcx_cute.
+        MESSAGE 'error' TYPE 'I'.
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD pai.
+
+    CASE sy-ucomm.
+      WHEN 'BACK' OR 'HOME' OR 'CANCEL'.
+        IF cute->check_input( ) = abap_false.
+          MESSAGE 'input error' TYPE 'S'.
+        ENDIF.
+
+        IF cute->check_unsaved_data( ) = abap_true.
+          data(answer) = ask_save_data( ).
+          CASE answer.
+            WHEN '1'.
+              cute->save( ).
+              SET SCREEN 0.
+              LEAVE SCREEN.
+            WHEN '2'.
+              SET SCREEN 0.
+              LEAVE SCREEN.
+            WHEN 'A'.
+              RETURN.
+          ENDCASE.
+        ELSE.
+          SET SCREEN 0.
+          LEAVE SCREEN.
+
+        ENDIF.
       WHEN OTHERS.
-        RAISE EXCEPTION TYPE zcx_cute_unsupported_category.
+
     ENDCASE.
+
+
+  ENDMETHOD.
+
+  METHOD ask_save_data.
+    DATA answer TYPE c LENGTH 1.
+
+    CALL FUNCTION 'POPUP_TO_CONFIRM'
+      EXPORTING
+        titlebar              = 'unsaved data'(001)
+        text_question         = 'Save data before leaving?'(002)
+        text_button_1         = 'Yes, please'(yes)
+        icon_button_1         = 'ICON_SYSTEM_SAVE'
+        text_button_2         = 'No, thanks'(ano)
+        icon_button_2         = 'ICON_SYSTEM_BACK'
+        default_button        = '1'
+        display_cancel_button = 'X'
+        start_column          = 25
+        start_row             = 6
+        popup_type            = 'ICON_MESSAGE_QUESTION'
+      IMPORTING
+        answer                = answer
+      EXCEPTIONS
+        text_not_found        = 1
+        OTHERS                = 2.
+    IF sy-subrc = 0.
+      result = answer.
+    ENDIF.
+
+
+  ENDMETHOD.
+
+  METHOD set_status.
+    SET PF-STATUS '100'.
+    IF p_edit = abap_true.
+      SET TITLEBAR 'EDIT' WITH p_table.
+    ELSE.
+      SET TITLEBAR 'SHOW' WITH p_table.
+    ENDIF.
   ENDMETHOD.
 
 ENDCLASS.
 
-INITIALIZATION.
-  cmt = 'press enter'.
+DATA main TYPE REF TO lcl_main.
 
-*START-OF-SELECTION.
-AT SELECTION-SCREEN.
+START-OF-SELECTION.
 
-  TRY.
-      DATA(cute) = lcl_cute_main=>get_instance( p_table ).
-      cute->edit( NEW cl_gui_dialogbox_container( top = 10 left = 10 height = 600 width = 1500 ) ).
-    CATCH zcx_cute.
-      MESSAGE 'error' TYPE 'I'.
-  ENDTRY.
+  CALL SCREEN 100.
+
+
+
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+
+  CHECK main IS INITIAL.
+  main = NEW #( ).
+  main->pbo( p_edit ).
+
+ENDMODULE.
+
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  main->pai( sy-ucomm ).
+
+ENDMODULE.

@@ -10,6 +10,74 @@
     <STATE>1</STATE>
     <UNICODE>X</UNICODE>
    </VSEOINTERF>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>CHECK_AUTHORITY</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>check edit authority for this table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>CHECK_INPUT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>check data before saving or on request</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>CHECK_UNSAVED_DATA</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>check data before saving or on request</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>EDIT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Edit source data (table or view)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>MAP_EDIT_TO_ORIGIN</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Map data from display structure to database structure</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>MAP_ORIGIN_TO_EDIT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Map data from database structure to display structure</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>READ</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>read data from source (table or view)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>SAVE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Save data</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>SET_SOURCE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Set name of source (table or view)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>SHOW</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Show source data (table or view)</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>UNSAVED_DATA</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>General Flag</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
   </asx:values>
  </asx:abap>
 </abapGit>

@@ -5,11 +5,25 @@
    <VSEOINTERF>
     <CLSNAME>ZIF_CUTE_SOURCE_INFO</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>CUTE source info</DESCRIPT>
+    <DESCRIPT>CUTE - source info</DESCRIPT>
     <EXPOSURE>2</EXPOSURE>
     <STATE>1</STATE>
     <UNICODE>X</UNICODE>
    </VSEOINTERF>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE_SOURCE_INFO</CLSNAME>
+     <CMPNAME>GET_FIELD_INFO</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Get information about field of source</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE_SOURCE_INFO</CLSNAME>
+     <CMPNAME>READ</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>read information about source</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
   </asx:values>
  </asx:abap>
 </abapGit>

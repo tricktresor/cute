@@ -1,37 +1,37 @@
-class ZCL_CUTE_TABLE_EDIT definition
-  public
-  create public .
+CLASS zcl_cute_table_edit DEFINITION
+  PUBLIC
+  CREATE PUBLIC .
 
-public section.
+  PUBLIC SECTION.
 
-  interfaces ZIF_CUTE .
-protected section.
-private section.
+    INTERFACES zif_cute .
+  PROTECTED SECTION.
+  PRIVATE SECTION.
 
-  data GRID type ref to CL_GUI_ALV_GRID .
-  data SPLITTER type ref to CL_GUI_EASY_SPLITTER_CONTAINER .
+    DATA grid TYPE REF TO cl_gui_alv_grid .
+    DATA splitter TYPE REF TO cl_gui_easy_splitter_container .
 
-  methods EDIT_GRID .
-  methods GRID_EXCLUDED_FUNCTIONS
-    returning
-      value(FUNCTIONS) type UI_FUNCTIONS .
-  methods HANDLE_DATA_CHANGED
-    for event DATA_CHANGED of CL_GUI_ALV_GRID
-    importing
-      !ER_DATA_CHANGED
-      !E_ONF4
-      !E_ONF4_AFTER
-      !E_ONF4_BEFORE
-      !E_UCOMM .
-  methods HANDLE_TOOLBAR
-    for event TOOLBAR of CL_GUI_ALV_GRID
-    importing
-      !E_INTERACTIVE
-      !E_OBJECT .
-  methods HANDLE_USER_COMMAND
-    for event USER_COMMAND of CL_GUI_ALV_GRID
-    importing
-      !E_UCOMM .
+    METHODS edit_grid .
+    METHODS grid_excluded_functions
+      RETURNING
+        VALUE(functions) TYPE ui_functions .
+    METHODS handle_data_changed
+          FOR EVENT data_changed OF cl_gui_alv_grid
+      IMPORTING
+          !er_data_changed
+          !e_onf4
+          !e_onf4_after
+          !e_onf4_before
+          !e_ucomm .
+    METHODS handle_toolbar
+          FOR EVENT toolbar OF cl_gui_alv_grid
+      IMPORTING
+          !e_interactive
+          !e_object .
+    METHODS handle_user_command
+          FOR EVENT user_command OF cl_gui_alv_grid
+      IMPORTING
+          !e_ucomm .
 ENDCLASS.
 
 
@@ -39,7 +39,7 @@ ENDCLASS.
 CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
 
 
-  method EDIT_GRID.
+  METHOD edit_grid.
 
 
     FIELD-SYMBOLS <edit_data> TYPE table.
@@ -47,26 +47,41 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     DATA(edit_data) = zif_cute~table_helper->get_data_reference_edit( ).
     ASSIGN edit_data->* TO <edit_data>.
 
+    IF zif_cute~container IS INITIAL.
+      zif_cute~container = NEW cl_gui_dialogbox_container( top = 10 left = 10 height = 600 width = 1500 ).
+    ENDIF.
 
-    splitter = NEW #(
-      parent        = zif_cute~container
-      orientation   = cl_gui_easy_splitter_container=>orientation_vertical
-      sash_position = 70 ).
+    IF zif_cute~authorized_to-maintain = abap_true.
+      "use separate container for application log in edit mode
+      splitter = NEW #(
+        parent        = zif_cute~container
+        orientation   = cl_gui_easy_splitter_container=>orientation_vertical
+        sash_position = 70 ).
+      DATA(container_grid) = splitter->top_left_container.
+      DATA(container_prot) = splitter->bottom_right_container.
+    ELSE.
+      "no container for application log in display mode
+      container_grid = zif_cute~container.
+    ENDIF.
 
     grid = NEW #(
-         i_parent          = splitter->top_left_container
-         i_applogparent    = splitter->bottom_right_container
+         i_parent          = container_grid
+         i_applogparent    = container_prot
          i_appl_events     = ' ' ).
 
-    grid->register_edit_event( cl_gui_alv_grid=>mc_evt_enter ).
-    grid->set_ready_for_input( 1 ).
+    IF zif_cute~authorized_to-maintain = abap_true.
+      grid->register_edit_event( cl_gui_alv_grid=>mc_evt_enter ).
+      grid->set_ready_for_input( 1 ).
+      SET HANDLER handle_data_changed FOR grid.
+    ENDIF.
 
-    SET HANDLER handle_data_changed FOR grid.
     SET HANDLER handle_user_command FOR grid.
     SET HANDLER handle_toolbar FOR grid.
 
     DATA layout TYPE lvc_s_layo.
-    DATA(fcat) = zif_cute~table_helper->get_field_catalog( grid ).
+    DATA(fcat) = zif_cute~table_helper->get_field_catalog(
+      grid = grid
+      edit = zif_cute~authorized_to-maintain ).
 
     grid->set_table_for_first_display(
       EXPORTING
@@ -85,14 +100,14 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
         OTHERS                        = 4  ).
     IF sy-subrc = 0.
       grid->set_toolbar_interactive( ).
-      WRITE space.
+*      WRITE space.
     ENDIF.
 
 
-  endmethod.
+  ENDMETHOD.
 
 
-  method GRID_EXCLUDED_FUNCTIONS.
+  METHOD grid_excluded_functions.
 
     APPEND cl_gui_alv_grid=>mc_mb_view TO functions.
     APPEND cl_gui_alv_grid=>mc_fc_reprep TO functions.
@@ -103,10 +118,10 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     APPEND cl_gui_alv_grid=>mc_fc_graph TO functions.
 
 
-  endmethod.
+  ENDMETHOD.
 
 
-  method HANDLE_DATA_CHANGED.
+  METHOD handle_data_changed.
 
 
     DATA msgid             TYPE sy-msgid.
@@ -122,8 +137,9 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     AND   e_onf4_after IS INITIAL
     AND   e_onf4_before IS INITIAL.
 
-    LOOP AT er_data_changed->mt_good_cells INTO DATA(good_cell).
-      DATA(field_info) = zif_cute~source_information->get_field_info( good_cell-fieldname ).
+    LOOP AT er_data_changed->mt_mod_cells INTO DATA(mod_cell).
+      DATA(field_info) = zif_cute~source_information->get_field_info( mod_cell-fieldname ).
+      zif_cute~unsaved_data = abap_true.
 
 *      CALL FUNCTION 'DDUT_INPUT_CHECK'
 *        EXPORTING
@@ -166,10 +182,13 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
 
 
 
-  endmethod.
+  ENDMETHOD.
 
 
-  method HANDLE_TOOLBAR.
+  METHOD handle_toolbar.
+
+    "do not display SAVE icon if only in Display mode
+    CHECK zif_cute~authorized_to-maintain = abap_true.
 
     DATA button  TYPE stb_button.
     CLEAR button.
@@ -185,10 +204,10 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     button-disabled  = ' '.
     APPEND button TO e_object->mt_toolbar.
 
-  endmethod.
+  ENDMETHOD.
 
 
-  method HANDLE_USER_COMMAND.
+  METHOD handle_user_command.
 
     CASE e_ucomm.
       WHEN 'SAVE'.
@@ -196,26 +215,46 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
       WHEN OTHERS.
     ENDCASE.
 
-  endmethod.
+  ENDMETHOD.
 
 
-  method ZIF_CUTE~CHECK.
+  METHOD zif_cute~check_authority.
+
+    zif_cute~authorized_to = zcl_cute_authorization=>check_all(
+      group    = zif_cute~source_information->cute_tech-sm30_group
+      name     = zif_cute~source_information->name ).
+
+  ENDMETHOD.
 
 
-  endmethod.
+  METHOD ZIF_CUTE~CHECK_INPUT.
+
+    grid->check_changed_data( IMPORTING e_valid = valid ).
+
+  ENDMETHOD.
 
 
-  method ZIF_CUTE~EDIT.
+  METHOD zif_cute~check_unsaved_data.
+    DATA(valid) = zif_cute~check_input( ).
+    unsaved_data = zif_cute~unsaved_data.
+  ENDMETHOD.
 
-    zif_cute~container = container.
+
+  METHOD zif_cute~edit.
+
     zif_cute~table_helper = zcl_cute_tab_helper=>get_instance( zif_cute~source_information ).
-    zif_cute~read( ).
-    edit_grid( ).
+    TRY.
+        zif_cute~check_authority( ).
+        zif_cute~read( ).
+        edit_grid( ).
+      CATCH zcx_cute_not_authorized.
+        RETURN.
+    ENDTRY.
 
-  endmethod.
+  ENDMETHOD.
 
 
-  method ZIF_CUTE~MAP_EDIT_TO_ORIGIN.
+  METHOD zif_cute~map_edit_to_origin.
 
     DATA(origin_data) = zif_cute~table_helper->get_data_reference_origin( ).
     DATA(edit_data)   = zif_cute~table_helper->get_data_reference_edit( ).
@@ -230,10 +269,10 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     <origin_data> = CORRESPONDING #( <edit_data> ).
 
 
-  endmethod.
+  ENDMETHOD.
 
 
-  method ZIF_CUTE~MAP_ORIGIN_TO_EDIT.
+  METHOD zif_cute~map_origin_to_edit.
 
 
     DATA(origin_data) = zif_cute~table_helper->get_data_reference_origin( ).
@@ -249,10 +288,10 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     <edit_data> = CORRESPONDING #( <origin_data> ).
 
 
-  endmethod.
+  ENDMETHOD.
 
 
-  method ZIF_CUTE~READ.
+  METHOD zif_cute~read.
 
     FIELD-SYMBOLS <table> TYPE table.
     DATA(tabref) = zif_cute~table_helper->get_data_reference_origin( ).
@@ -264,34 +303,59 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     zif_cute~map_origin_to_edit( ).
 
 
-  endmethod.
+  ENDMETHOD.
 
 
-  method ZIF_CUTE~SAVE.
+  METHOD zif_cute~save.
 
     FIELD-SYMBOLS <origin_data> TYPE table.
 
-    zif_cute~map_edit_to_origin( ).
-
-    DATA(origin_data) = zif_cute~table_helper->get_data_reference_origin( ).
-    ASSIGN origin_data->* TO <origin_data>.
-
-
-    MODIFY (zif_cute~source_information->name)
-      FROM TABLE <origin_data>.
-    IF sy-subrc = 0.
-      MESSAGE 'data has been saved.'(svs) TYPE 'S'.
+    IF zif_cute~check_input( ) = abap_false.
+      MESSAGE 'input error. data cannot be saved.' TYPE 'I'.
     ELSE.
-      MESSAGE 'Error saving data... ;('(sve) TYPE 'I'.
+
+      zif_cute~map_edit_to_origin( ).
+
+      DATA(origin_data) = zif_cute~table_helper->get_data_reference_origin( ).
+      ASSIGN origin_data->* TO <origin_data>.
+
+
+      MODIFY (zif_cute~source_information->name)
+        FROM TABLE <origin_data>.
+      IF sy-subrc = 0.
+        zif_cute~unsaved_data = abap_false.
+        MESSAGE 'data has been saved.'(svs) TYPE 'S'.
+      ELSE.
+        MESSAGE 'Error saving data... ;('(sve) TYPE 'I'.
+      ENDIF.
     ENDIF.
 
 
-  endmethod.
+  ENDMETHOD.
 
 
-  method ZIF_CUTE~SET_SOURCE.
+  METHOD zif_cute~set_container.
+    zif_cute~container = container.
+  ENDMETHOD.
+
+
+  METHOD zif_cute~set_source.
 
     zif_cute~source_information = source_info.
 
-  endmethod.
+  ENDMETHOD.
+
+
+  METHOD zif_cute~show.
+
+    zif_cute~table_helper = zcl_cute_tab_helper=>get_instance( zif_cute~source_information ).
+    TRY.
+        zif_cute~authorized_to-display = abap_true.
+        zif_cute~read( ).
+        edit_grid( ).
+      CATCH zcx_cute_not_authorized.
+        RETURN.
+    ENDTRY.
+
+  ENDMETHOD.
 ENDCLASS.

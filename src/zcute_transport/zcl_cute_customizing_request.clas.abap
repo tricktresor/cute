@@ -1,34 +1,35 @@
-CLASS zcl_cute_customizing_request DEFINITION
-  PUBLIC
-  FINAL
-  CREATE PUBLIC .
+class ZCL_CUTE_CUSTOMIZING_REQUEST definition
+  public
+  final
+  create public .
 
-  PUBLIC SECTION.
+public section.
 
-    INTERFACES zif_cute_customizing_request .
+  interfaces ZIF_CUTE_CUSTOMIZING_REQUEST .
 
-    ALIASES get_request FOR zif_cute_customizing_request~get_request.
-    ALIASES add_key_to_request FOR zif_cute_customizing_request~add_key_to_request.
-    ALIASES set_request_via_popup FOR zif_cute_customizing_request~set_request_via_popup.
-
-    METHODS constructor
-      IMPORTING
-        !i_request TYPE e071-trkorr OPTIONAL
-        !i_task    TYPE e071-trkorr OPTIONAL.
+  methods CONSTRUCTOR
+    importing
+      !I_REQUEST type E071-TRKORR optional
+      !I_TASK type E071-TRKORR optional .
   PROTECTED SECTION.
-  PRIVATE SECTION.
+private section.
 
-    DATA request TYPE e071-trkorr .
-    DATA task TYPE e071-trkorr.
-    DATA e071_entries TYPE TABLE OF e071.
-    DATA e071k_entries TYPE TABLE OF e071k.
-    DATA ko200 TYPE ko200.
+  data REQUEST type E071-TRKORR .
+  data TASK type E071-TRKORR .
+  data:
+    e071_entries TYPE TABLE OF e071 .
+  data:
+    e071k_entries TYPE TABLE OF e071k .
+  data KO200 type KO200 .
 
-    METHODS: validate_input IMPORTING table_name TYPE tabname
-                                      table_key  TYPE trobj_name
-                            RAISING   zcx_cute_no_request
-                                      zcx_cute_table_does_not_exist
-                                      zcx_cute_key_not_valid.
+  methods VALIDATE_INPUT
+    importing
+      !TABLE_NAME type TABNAME
+      !TABLE_KEY type TROBJ_NAME
+    raising
+      ZCX_CUTE_NO_REQUEST
+      ZCX_CUTE_TABLE_DOES_NOT_EXIST
+      ZCX_CUTE_KEY_NOT_VALID .
 ENDCLASS.
 
 
@@ -92,7 +93,7 @@ CLASS ZCL_CUTE_CUSTOMIZING_REQUEST IMPLEMENTATION.
 
     CALL FUNCTION 'TR_OBJECT_INSERT'
       EXPORTING
-        wi_order                = get_request( )
+        wi_order                = zif_cute_customizing_request~get_request( )
         wi_ko200                = ko200    " Eingabe editiertes Objekt
       TABLES
         wt_e071k                = e071k_entries    " Eingabetabelle editierter Objekt-keys

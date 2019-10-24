@@ -1,31 +1,37 @@
+class ZCL_CUTE_TAB_HELPER definition
+  public
+  final
+  create public .
 
-CLASS zcl_cute_tab_helper DEFINITION PUBLIC FINAL CREATE PUBLIC.
-  PUBLIC SECTION.
-    CLASS-METHODS get_instance
-      IMPORTING
-        source_info     TYPE REF TO zif_cute_source_info
-      RETURNING
-        VALUE(instance) TYPE REF TO zcl_cute_tab_helper.
-    METHODS set_source
-      IMPORTING
-        source_info TYPE REF TO zif_cute_source_info.
-    METHODS get_components
-      RETURNING
-        VALUE(components) TYPE cl_abap_structdescr=>component_table.
-    METHODS set_components
-      IMPORTING
-        components TYPE cl_abap_structdescr=>component_table.
-    METHODS get_data_reference_edit
-      RETURNING
-        VALUE(dataref) TYPE REF TO data.
-    METHODS get_data_reference_origin
-      RETURNING
-        VALUE(dataref) TYPE REF TO data.
-    METHODS get_field_catalog
-      IMPORTING
-        grid        TYPE REF TO cl_gui_alv_grid
-      RETURNING
-        VALUE(fcat) TYPE lvc_t_fcat.
+public section.
+
+  class-methods GET_INSTANCE
+    importing
+      !SOURCE_INFO type ref to ZIF_CUTE_SOURCE_INFO
+    returning
+      value(INSTANCE) type ref to ZCL_CUTE_TAB_HELPER .
+  methods SET_SOURCE
+    importing
+      !SOURCE_INFO type ref to ZIF_CUTE_SOURCE_INFO .
+  methods GET_COMPONENTS
+    returning
+      value(COMPONENTS) type CL_ABAP_STRUCTDESCR=>COMPONENT_TABLE .
+  methods SET_COMPONENTS
+    importing
+      !COMPONENTS type CL_ABAP_STRUCTDESCR=>COMPONENT_TABLE .
+  methods GET_DATA_REFERENCE_EDIT
+    returning
+      value(DATAREF) type ref to DATA .
+  methods GET_DATA_REFERENCE_ORIGIN
+    returning
+      value(DATAREF) type ref to DATA .
+  methods GET_FIELD_CATALOG
+    importing
+      !GRID type ref to CL_GUI_ALV_GRID
+      !EDIT type FLAG
+    returning
+      value(FCAT) type LVC_T_FCAT .
+protected section.
   PRIVATE SECTION.
     METHODS create.
     DATA struc_origin_descr TYPE REF TO cl_abap_structdescr.
@@ -106,7 +112,7 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
 
           DATA(field_info) = source_information->get_field_info( component-name ).
           IF field_info-cute-read_only = abap_false.
-            <field>-edit      = abap_true.
+            <field>-edit      = edit.
           ENDIF.
 
           CASE field_info-cute-fieldtype.

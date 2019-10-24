@@ -1,19 +1,32 @@
-INTERFACE zif_cute
-  PUBLIC .
+interface ZIF_CUTE
+  public .
 
-  METHODS edit
-    IMPORTING
-      container TYPE REF TO cl_gui_container.
-  METHODS save.
-  METHODS check.
-  METHODS read.
-  METHODS map_edit_to_origin.
-  METHODS map_origin_to_edit.
-  METHODS set_source
-    IMPORTING
-      source_info TYPE REF TO zif_cute_source_info.
-  DATA source_information TYPE REF TO zif_cute_source_info.
-  DATA table_helper TYPE REF TO zcl_cute_tab_helper.
-  DATA container TYPE REF TO cl_gui_container.
 
-ENDINTERFACE.
+  data SOURCE_INFORMATION type ref to ZIF_CUTE_SOURCE_INFO .
+  data TABLE_HELPER type ref to ZCL_CUTE_TAB_HELPER .
+  data CONTAINER type ref to CL_GUI_CONTAINER .
+  data AUTHORIZED_TO type ZCL_CUTE_AUTHORIZATION=>AUTHORIZATION_TYPE .
+  data UNSAVED_DATA type FLAG .
+
+  methods CHECK_AUTHORITY
+    raising
+      ZCX_CUTE_NOT_AUTHORIZED .
+  methods CHECK_INPUT
+    returning
+      value(VALID) type FLAG .
+  methods CHECK_UNSAVED_DATA
+    returning
+      value(UNSAVED_DATA) type FLAG .
+  methods EDIT .
+  methods MAP_EDIT_TO_ORIGIN .
+  methods MAP_ORIGIN_TO_EDIT .
+  methods READ .
+  methods SAVE .
+  methods SET_CONTAINER
+    importing
+      !CONTAINER type ref to CL_GUI_CONTAINER .
+  methods SET_SOURCE
+    importing
+      !SOURCE_INFO type ref to ZIF_CUTE_SOURCE_INFO .
+  methods SHOW .
+endinterface.
