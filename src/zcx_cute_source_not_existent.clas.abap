@@ -1,11 +1,11 @@
-class ZCX_CUTE_GET_TYPE definition
+class ZCX_CUTE_SOURCE_NOT_EXISTENT definition
   public
   inheriting from ZCX_CUTE
   create public .
 
 public section.
 
-  constants ZCX_CUTE_GET_TYPE type SOTR_CONC value '005056A038571ED9BDDF44E92725D958' ##NO_TEXT.
+  constants ZCX_CUTE_SOURCE_NOT_EXISTENT type SOTR_CONC value '005056A038571ED9BDDF60DD20BB9958' ##NO_TEXT.
 
   methods CONSTRUCTOR
     importing
@@ -17,7 +17,7 @@ ENDCLASS.
 
 
 
-CLASS ZCX_CUTE_GET_TYPE IMPLEMENTATION.
+CLASS ZCX_CUTE_SOURCE_NOT_EXISTENT IMPLEMENTATION.
 
 
   method CONSTRUCTOR.
@@ -27,7 +27,7 @@ TEXTID = TEXTID
 PREVIOUS = PREVIOUS
 .
  IF textid IS INITIAL.
-   me->textid = ZCX_CUTE_GET_TYPE .
+   me->textid = ZCX_CUTE_SOURCE_NOT_EXISTENT .
  ENDIF.
   endmethod.
 ENDCLASS.

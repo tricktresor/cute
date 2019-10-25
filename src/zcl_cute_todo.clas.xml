@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_CUTE_SOURCE_INFORMATION</CLSNAME>
+    <CLSNAME>ZCL_CUTE_TODO</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>CUTE - Source Information</DESCRIPT>
+    <DESCRIPT>CUTE - known todos</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
@@ -13,16 +13,22 @@
    </VSEOCLASS>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_CUTE_SOURCE_INFORMATION</CLSNAME>
-     <CMPNAME>GET_INSTANCE</CMPNAME>
+     <CLSNAME>ZCL_CUTE_TODO</CLSNAME>
+     <CMPNAME>BEAUTIFY</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>get instance of source information</DESCRIPT>
+     <DESCRIPT>should be made better</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_CUTE_SOURCE_INFORMATION</CLSNAME>
-     <CMPNAME>GET_SOURCE_TYPE</CMPNAME>
+     <CLSNAME>ZCL_CUTE_TODO</CLSNAME>
+     <CMPNAME>BUG</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>read type of source (TABL or VIEW)</DESCRIPT>
+     <DESCRIPT>known error</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_CUTE_TODO</CLSNAME>
+     <CMPNAME>CHECK</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>mark to check</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

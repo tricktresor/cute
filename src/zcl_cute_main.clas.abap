@@ -20,8 +20,7 @@ ENDCLASS.
 CLASS ZCL_CUTE_MAIN IMPLEMENTATION.
 
 
-  method GET_INSTANCE.
-
+  METHOD get_instance.
 
     DATA(source_info) = zcl_cute_source_information=>get_instance( source ).
 
@@ -34,6 +33,5 @@ CLASS ZCL_CUTE_MAIN IMPLEMENTATION.
       WHEN OTHERS.
         RAISE EXCEPTION TYPE zcx_cute_unsupported_category.
     ENDCASE.
-
-  endmethod.
+  ENDMETHOD.
 ENDCLASS.

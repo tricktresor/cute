@@ -45,8 +45,9 @@ CLASS lcl_main IMPLEMENTATION.
 
         cl_gui_container=>set_focus( cc ).
 
-      CATCH zcx_cute.
-        MESSAGE 'error' TYPE 'I'.
+      CATCH zcx_cute INTO DATA(error).
+        MESSAGE error TYPE 'E' DISPLAY LIKE 'I'.
+
     ENDTRY.
   ENDMETHOD.
 
@@ -59,7 +60,7 @@ CLASS lcl_main IMPLEMENTATION.
         ENDIF.
 
         IF cute->check_unsaved_data( ) = abap_true.
-          data(answer) = ask_save_data( ).
+          DATA(answer) = ask_save_data( ).
           CASE answer.
             WHEN '1'.
               cute->save( ).

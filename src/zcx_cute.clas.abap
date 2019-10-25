@@ -1,9 +1,11 @@
 class ZCX_CUTE definition
   public
-  inheriting from CX_STATIC_CHECK
+  inheriting from CX_DYNAMIC_CHECK
   create public .
 
 public section.
+
+  constants ZCX_CUTE type SOTR_CONC value '005056A038571ED9BDDF401375BAD958' ##NO_TEXT.
 
   methods CONSTRUCTOR
     importing
@@ -24,5 +26,8 @@ EXPORTING
 TEXTID = TEXTID
 PREVIOUS = PREVIOUS
 .
+ IF textid IS INITIAL.
+   me->textid = ZCX_CUTE .
+ ENDIF.
   endmethod.
 ENDCLASS.

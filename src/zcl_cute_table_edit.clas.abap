@@ -1,42 +1,110 @@
-CLASS zcl_cute_table_edit DEFINITION
-  PUBLIC
-  CREATE PUBLIC .
+class ZCL_CUTE_TABLE_EDIT definition
+  public
+  create public .
 
-  PUBLIC SECTION.
+public section.
 
-    INTERFACES zif_cute .
+  interfaces ZIF_CUTE .
   PROTECTED SECTION.
-  PRIVATE SECTION.
+private section.
 
-    DATA grid TYPE REF TO cl_gui_alv_grid .
-    DATA splitter TYPE REF TO cl_gui_easy_splitter_container .
+  data GRID type ref to CL_GUI_ALV_GRID .
+  data SPLITTER type ref to CL_GUI_EASY_SPLITTER_CONTAINER .
+  data ERRORS_EXIST type FLAG .
 
-    METHODS edit_grid .
-    METHODS grid_excluded_functions
-      RETURNING
-        VALUE(functions) TYPE ui_functions .
-    METHODS handle_data_changed
-          FOR EVENT data_changed OF cl_gui_alv_grid
-      IMPORTING
-          !er_data_changed
-          !e_onf4
-          !e_onf4_after
-          !e_onf4_before
-          !e_ucomm .
-    METHODS handle_toolbar
-          FOR EVENT toolbar OF cl_gui_alv_grid
-      IMPORTING
-          !e_interactive
-          !e_object .
-    METHODS handle_user_command
-          FOR EVENT user_command OF cl_gui_alv_grid
-      IMPORTING
-          !e_ucomm .
+  methods EDIT_GRID .
+  methods GRID_EXCLUDED_FUNCTIONS
+    returning
+      value(FUNCTIONS) type UI_FUNCTIONS .
+  methods HANDLE_DATA_CHANGED
+    for event DATA_CHANGED of CL_GUI_ALV_GRID
+    importing
+      !ER_DATA_CHANGED
+      !E_ONF4
+      !E_ONF4_AFTER
+      !E_ONF4_BEFORE
+      !E_UCOMM .
+  methods HANDLE_TOOLBAR
+    for event TOOLBAR of CL_GUI_ALV_GRID
+    importing
+      !E_INTERACTIVE
+      !E_OBJECT .
+  methods HANDLE_AFTER_USER_COMMAND
+    for event AFTER_USER_COMMAND of CL_GUI_ALV_GRID
+    importing
+      !E_UCOMM
+      !E_SAVED
+      !E_NOT_PROCESSED .
+  methods HANDLE_USER_COMMAND
+    for event USER_COMMAND of CL_GUI_ALV_GRID
+    importing
+      !E_UCOMM .
+  methods CHECK_KEYS
+    raising
+      ZCX_CUTE_DATA_DUPLICATE_KEYS .
 ENDCLASS.
 
 
 
 CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
+
+
+  METHOD check_keys.
+
+    errors_exist = abap_false.
+
+    FIELD-SYMBOLS <edit_data> TYPE table.
+    DATA(edit_data) = zif_cute~table_helper->get_data_reference_edit( ).
+    ASSIGN edit_data->* TO <edit_data>.
+
+    FIELD-SYMBOLS <edit_key> TYPE any.
+    DATA(edit_key) = zif_cute~table_helper->get_data_reference_key( ).
+    ASSIGN edit_key->* TO <edit_key>.
+
+    DATA key_table TYPE STANDARD TABLE OF string.
+    FIELD-SYMBOLS <color> TYPE lvc_t_scol.
+
+    LOOP AT <edit_data> ASSIGNING FIELD-SYMBOL(<edit_line>).
+
+      "fill key
+      MOVE-CORRESPONDING <edit_line> TO <edit_key>.
+
+      "assign color table
+      ASSIGN COMPONENT '_COLOR_' OF STRUCTURE <edit_line> TO <color>.
+
+      "check key values
+      READ TABLE key_table WITH KEY table_line = <edit_key> TRANSPORTING NO FIELDS.
+      IF sy-subrc > 0.
+        APPEND <edit_key> TO key_table.
+        DELETE <color> WHERE fname = space.
+      ELSE.
+        "more detailed information: if first of duplicate key has been changed, then
+        "the 2nd line will be marked as duplicate. the changed line should be
+        "marked because the user just edited it
+        zcl_cute_todo=>beautify( 'maybe derive detailed information about wrong part of the key and line' ).
+        errors_exist = abap_true.
+        "color duplicate line RED
+        READ TABLE <color> INDEX 1 ASSIGNING FIELD-SYMBOL(<col>).
+        IF sy-subrc = 0.
+          <col>-color-col = col_negative.
+          <col>-color-int = 1.
+        ELSE.
+          INSERT VALUE #( color-col = 0 color-int = 1 ) INTO TABLE <color>.
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+
+    IF errors_exist = abap_true.
+      "display colors
+      zcl_cute_todo=>bug( 'colors will only be displayed after 2nd check' ).
+      grid->refresh_table_display(
+        i_soft_refresh = abap_false
+        is_stable = VALUE #( col = abap_true row = abap_true ) ).
+
+      RAISE EXCEPTION TYPE zcx_cute_data_duplicate_keys.
+    ENDIF.
+
+  ENDMETHOD.
 
 
   METHOD edit_grid.
@@ -75,10 +143,13 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
       SET HANDLER handle_data_changed FOR grid.
     ENDIF.
 
-    SET HANDLER handle_user_command FOR grid.
-    SET HANDLER handle_toolbar FOR grid.
+    SET HANDLER handle_user_command       FOR grid.
+    SET HANDLER handle_after_user_command FOR grid.
+    SET HANDLER handle_toolbar            FOR grid.
 
     DATA layout TYPE lvc_s_layo.
+    layout-ctab_fname = '_COLOR_'.
+
     DATA(fcat) = zif_cute~table_helper->get_field_catalog(
       grid = grid
       edit = zif_cute~authorized_to-maintain ).
@@ -121,66 +192,43 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD handle_after_user_command.
+
+    CASE e_ucomm.
+      WHEN '&CHECK'.
+        TRY.
+            check_keys( ).
+          CATCH zcx_cute_data.
+            MESSAGE 'Duplicate keys; please check!' TYPE 'I'.
+        ENDTRY.
+    ENDCASE.
+
+  ENDMETHOD.
+
+
   METHOD handle_data_changed.
-
-
-    DATA msgid             TYPE sy-msgid.
-    DATA msgty             TYPE sy-msgty.
-    DATA msgno             TYPE sy-msgno.
-    DATA msgv1             TYPE sy-msgv1.
-    DATA msgv2             TYPE sy-msgv2.
-    DATA msgv3             TYPE sy-msgv3.
-    DATA msgv4             TYPE sy-msgv4.
-    DATA value_internal    TYPE string.
 
     CHECK e_onf4 IS INITIAL
     AND   e_onf4_after IS INITIAL
     AND   e_onf4_before IS INITIAL.
 
-    LOOP AT er_data_changed->mt_mod_cells INTO DATA(mod_cell).
-      DATA(field_info) = zif_cute~source_information->get_field_info( mod_cell-fieldname ).
+    FIELD-SYMBOLS <edit_data> TYPE table.
+    DATA(edit_data) = zif_cute~table_helper->get_data_reference_edit( ).
+    ASSIGN edit_data->* TO <edit_data>.
+
+    LOOP AT er_data_changed->mt_good_cells INTO DATA(good_cell).
+      DATA(field_info) = zif_cute~source_information->get_field_info( good_cell-fieldname ).
+      READ TABLE <edit_data> ASSIGNING FIELD-SYMBOL(<edit_line>) INDEX good_cell-row_id.
+      ASSIGN COMPONENT good_cell-fieldname OF STRUCTURE <edit_line> TO FIELD-SYMBOL(<value>).
+      <value> = good_cell-value.
       zif_cute~unsaved_data = abap_true.
-
-*      CALL FUNCTION 'DDUT_INPUT_CHECK'
-*        EXPORTING
-*          tabname           = zif_cute~source_information->name
-*          fieldname         = conv FNAM_____4( good_cell-fieldname )
-*          value             = good_cell-value
-*          value_is_external = 'X'
-*          no_forkey_check   = ' '
-*          keep_fieldinfo    = ' '
-*        IMPORTING
-*          msgid             = msgid
-*          msgty             = msgty
-*          msgno             = msgno
-*          msgv1             = msgv1
-*          msgv2             = msgv2
-*          msgv3             = msgv3
-*          msgv4             = msgv4
-*          value_internal    = value_internal
-*        EXCEPTIONS
-*          no_ddic_field     = 1
-*          illegal_move      = 2
-*          OTHERS            = 3.
-*      IF sy-subrc = 0 AND msgid IS NOT INITIAL.
-*        er_data_changed->add_protocol_entry(
-*            i_msgid     = msgid
-*            i_msgty     = msgty
-*            i_msgno     = msgno
-*            i_msgv1     = msgv1
-*            i_msgv2     = msgv2
-*            i_msgv3     = msgv3
-*            i_msgv4     = msgv4
-*            i_fieldname = good_cell-fieldname
-*            i_row_id    = good_cell-row_id
-*            i_tabix     = good_cell-tabix  ).
-*      ENDIF.
-
     ENDLOOP.
 
-    " fm DDUT_INPUT_CHECK
-
-
+    TRY.
+        check_keys( ).
+      CATCH zcx_cute_data_duplicate_keys.
+        MESSAGE e001 DISPLAY LIKE 'I'.
+    ENDTRY.
 
   ENDMETHOD.
 
@@ -312,22 +360,29 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
 
     IF zif_cute~check_input( ) = abap_false.
       MESSAGE 'input error. data cannot be saved.' TYPE 'I'.
+      RETURN.
+    ENDIF.
+
+    check_keys( ).
+
+    IF errors_exist = abap_true.
+      MESSAGE 'data error. data cannot be saved.' TYPE 'I'.
+      RETURN.
+    ENDIF.
+
+    zif_cute~map_edit_to_origin( ).
+
+    DATA(origin_data) = zif_cute~table_helper->get_data_reference_origin( ).
+    ASSIGN origin_data->* TO <origin_data>.
+
+
+    MODIFY (zif_cute~source_information->name)
+      FROM TABLE <origin_data>.
+    IF sy-subrc = 0.
+      zif_cute~unsaved_data = abap_false.
+      MESSAGE 'data has been saved.'(svs) TYPE 'S'.
     ELSE.
-
-      zif_cute~map_edit_to_origin( ).
-
-      DATA(origin_data) = zif_cute~table_helper->get_data_reference_origin( ).
-      ASSIGN origin_data->* TO <origin_data>.
-
-
-      MODIFY (zif_cute~source_information->name)
-        FROM TABLE <origin_data>.
-      IF sy-subrc = 0.
-        zif_cute~unsaved_data = abap_false.
-        MESSAGE 'data has been saved.'(svs) TYPE 'S'.
-      ELSE.
-        MESSAGE 'Error saving data... ;('(sve) TYPE 'I'.
-      ENDIF.
+      MESSAGE 'Error saving data... ;('(sve) TYPE 'I'.
     ENDIF.
 
 

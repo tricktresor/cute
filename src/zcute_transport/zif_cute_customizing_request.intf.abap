@@ -1,15 +1,15 @@
-interface ZIF_CUTE_CUSTOMIZING_REQUEST
-  public .
+INTERFACE zif_cute_customizing_request
+  PUBLIC .
 
 
-  methods SET_REQUEST_VIA_POPUP .
-  methods GET_REQUEST
-    returning
-      value(R_REQUEST) type E071-TRKORR .
-  methods ADD_KEY_TO_REQUEST
-    importing
-      !TABLE_NAME type TABNAME
-      !TABLE_KEY type TROBJ_NAME
-    raising
-      ZCX_CUTE_NO_REQUEST .
-endinterface.
+  METHODS set_request_via_popup .
+  METHODS get_request
+    RETURNING
+      VALUE(r_request) TYPE e071-trkorr .
+  METHODS add_key_to_request
+    IMPORTING
+      !table_name TYPE tabname
+      !table_key  TYPE trobj_name
+    RAISING
+      zcx_cute_transport_no_request .
+ENDINTERFACE.

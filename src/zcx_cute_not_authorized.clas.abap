@@ -1,17 +1,15 @@
 class ZCX_CUTE_NOT_AUTHORIZED definition
   public
   inheriting from ZCX_CUTE
-  final
   create public .
 
 public section.
 
-  interfaces IF_T100_DYN_MSG .
-  interfaces IF_T100_MESSAGE .
+  constants ZCX_CUTE_NOT_AUTHORIZED type SOTR_CONC value '005056A038571ED9BDDF555D9F5FD958' ##NO_TEXT.
 
   methods CONSTRUCTOR
     importing
-      !TEXTID like IF_T100_MESSAGE=>T100KEY optional
+      !TEXTID like TEXTID optional
       !PREVIOUS like PREVIOUS optional .
 protected section.
 private section.
@@ -25,13 +23,11 @@ CLASS ZCX_CUTE_NOT_AUTHORIZED IMPLEMENTATION.
   method CONSTRUCTOR.
 CALL METHOD SUPER->CONSTRUCTOR
 EXPORTING
+TEXTID = TEXTID
 PREVIOUS = PREVIOUS
 .
-clear me->textid.
-if textid is initial.
-  IF_T100_MESSAGE~T100KEY = IF_T100_MESSAGE=>DEFAULT_TEXTID.
-else.
-  IF_T100_MESSAGE~T100KEY = TEXTID.
-endif.
+ IF textid IS INITIAL.
+   me->textid = ZCX_CUTE_NOT_AUTHORIZED .
+ ENDIF.
   endmethod.
 ENDCLASS.
