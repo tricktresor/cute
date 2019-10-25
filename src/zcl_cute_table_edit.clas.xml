@@ -12,6 +12,20 @@
     <UNICODE>X</UNICODE>
     <MSG_ID>ZCUTE</MSG_ID>
    </VSEOCLASS>
+   <TPOOL>
+    <item>
+     <ID>I</ID>
+     <KEY>DCT</KEY>
+     <ENTRY>Documentation</ENTRY>
+     <LENGTH>23</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>DOC</KEY>
+     <ENTRY>Show documentation</ENTRY>
+     <LENGTH>28</LENGTH>
+    </item>
+   </TPOOL>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
      <CLSNAME>ZCL_CUTE_TABLE_EDIT</CLSNAME>

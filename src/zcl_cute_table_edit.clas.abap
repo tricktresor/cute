@@ -12,20 +12,19 @@ private section.
   data SPLITTER type ref to CL_GUI_EASY_SPLITTER_CONTAINER .
   data ERRORS_EXIST type FLAG .
 
-  methods SET_UPDATE_FLAG
-    importing
-      !FLAG type UPDKZ_D
-    changing
-      !LINE type ANY .
-  methods PROCESS_DELETED_DATA
-    importing
-      !ER_DATA_CHANGED type ref to CL_ALV_CHANGED_DATA_PROTOCOL .
-  methods REFRESH .
-  methods SET_KEY_FIELDS_READ_ONLY .
+  methods CHECK_KEYS
+    raising
+      ZCX_CUTE_DATA_DUPLICATE_KEYS .
   methods EDIT_GRID .
   methods GRID_EXCLUDED_FUNCTIONS
     returning
       value(FUNCTIONS) type UI_FUNCTIONS .
+  methods HANDLE_AFTER_USER_COMMAND
+    for event AFTER_USER_COMMAND of CL_GUI_ALV_GRID
+    importing
+      !E_UCOMM
+      !E_SAVED
+      !E_NOT_PROCESSED .
   methods HANDLE_DATA_CHANGED
     for event DATA_CHANGED of CL_GUI_ALV_GRID
     importing
@@ -39,25 +38,26 @@ private section.
     importing
       !E_INTERACTIVE
       !E_OBJECT .
-  methods HANDLE_AFTER_USER_COMMAND
-    for event AFTER_USER_COMMAND of CL_GUI_ALV_GRID
-    importing
-      !E_UCOMM
-      !E_SAVED
-      !E_NOT_PROCESSED .
   methods HANDLE_USER_COMMAND
     for event USER_COMMAND of CL_GUI_ALV_GRID
     importing
       !E_UCOMM .
-  methods CHECK_KEYS
-    raising
-      ZCX_CUTE_DATA_DUPLICATE_KEYS .
-  methods PROCESS_INSERTED_DATA
-    importing
-      !ER_DATA_CHANGED type ref to CL_ALV_CHANGED_DATA_PROTOCOL .
   methods PROCESS_CHANGED_DATA
     importing
       !ER_DATA_CHANGED type ref to CL_ALV_CHANGED_DATA_PROTOCOL .
+  methods PROCESS_DELETED_DATA
+    importing
+      !ER_DATA_CHANGED type ref to CL_ALV_CHANGED_DATA_PROTOCOL .
+  methods PROCESS_INSERTED_DATA
+    importing
+      !ER_DATA_CHANGED type ref to CL_ALV_CHANGED_DATA_PROTOCOL .
+  methods REFRESH .
+  methods SET_KEY_FIELDS_READ_ONLY .
+  methods SET_UPDATE_FLAG
+    importing
+      !FLAG type UPDKZ_D
+    changing
+      !LINE type ANY .
 ENDCLASS.
 
 
@@ -253,6 +253,19 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     button-butn_type = 3. "Separator
     APPEND button TO e_object->mt_toolbar.
 
+    "add docu button
+    CLEAR button.
+    button-function  = 'DOCU'.
+    button-icon      = icon_document.
+    button-text      = 'Documentation'(dct).
+    button-quickinfo = 'Show documentation'(doc).
+    button-butn_type = '0'. "normal Button
+    button-disabled  = ' '.
+    APPEND button TO e_object->mt_toolbar.
+
+    "do not display SAVE icon if only in Display mode
+    CHECK zif_cute~authorized_to-maintain = abap_true.
+
     "add save button
     CLEAR button.
     button-function  = 'SAVE'.
@@ -270,6 +283,11 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     CASE e_ucomm.
       WHEN 'SAVE'.
         zif_cute~save( ).
+      WHEN 'DOCU'.
+        zdodo_main=>show(
+          EXPORTING
+            id   = 'TB'
+            name = zif_cute~source_information->name ).
       WHEN OTHERS.
     ENDCASE.
 
