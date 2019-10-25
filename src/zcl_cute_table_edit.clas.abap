@@ -12,6 +12,7 @@ private section.
   data SPLITTER type ref to CL_GUI_EASY_SPLITTER_CONTAINER .
   data ERRORS_EXIST type FLAG .
 
+  methods SET_KEY_FIELDS_READ_ONLY .
   methods EDIT_GRID .
   methods GRID_EXCLUDED_FUNCTIONS
     returning
@@ -62,7 +63,6 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     ASSIGN edit_key->* TO <edit_key>.
 
     DATA key_table TYPE STANDARD TABLE OF string.
-    FIELD-SYMBOLS <color> TYPE lvc_t_scol.
     FIELD-SYMBOLS <color_row> TYPE char04.
 
     LOOP AT <edit_data> ASSIGNING FIELD-SYMBOL(<edit_line>).
@@ -142,11 +142,14 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
 
     DATA layout TYPE lvc_s_layo.
     layout-ctab_fname = '_COLOR_'.
+    layout-stylefname = '_STYLE_'.
     layout-info_fname = '_COLOR_ROW_'.
 
     DATA(fcat) = zif_cute~table_helper->get_field_catalog(
       grid = grid
       edit = zif_cute~authorized_to-maintain ).
+
+    set_key_fields_read_only( ).
 
     grid->set_table_for_first_display(
       EXPORTING
@@ -165,9 +168,7 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
         OTHERS                        = 4  ).
     IF sy-subrc = 0.
       grid->set_toolbar_interactive( ).
-*      WRITE space.
     ENDIF.
-
 
   ENDMETHOD.
 
@@ -206,18 +207,43 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     AND   e_onf4_after IS INITIAL
     AND   e_onf4_before IS INITIAL.
 
+    FIELD-SYMBOLS <color> TYPE lvc_t_scol.
+    FIELD-SYMBOLS <cell_color> TYPE lvc_s_scol.
     FIELD-SYMBOLS <edit_data> TYPE table.
+    FIELD-SYMBOLS <edit_line> TYPE any.
+
+
     DATA(edit_data) = zif_cute~table_helper->get_data_reference_edit( ).
     ASSIGN edit_data->* TO <edit_data>.
 
+    LOOP AT er_data_changed->mt_inserted_rows INTO DATA(rowins).
+      INSERT INITIAL LINE INTO <edit_data> ASSIGNING <edit_line> INDEX rowins-row_id.
+    ENDLOOP.
+
     LOOP AT er_data_changed->mt_good_cells INTO DATA(good_cell).
       DATA(field_info) = zif_cute~source_information->get_field_info( good_cell-fieldname ).
-      READ TABLE <edit_data> ASSIGNING FIELD-SYMBOL(<edit_line>) INDEX good_cell-row_id.
+      READ TABLE <edit_data> ASSIGNING <edit_line> INDEX good_cell-row_id.
+
+      "assign color table
+      ASSIGN COMPONENT '_COLOR_' OF STRUCTURE <edit_line> TO <color>.
+      READ TABLE <color> ASSIGNING <cell_color> WITH KEY fname = good_cell-fieldname.
       IF sy-subrc > 0.
-        INSERT INITIAL LINE INTO TABLE <edit_data> ASSIGNING <edit_line>.
+        INSERT INITIAL LINE INTO TABLE <color> ASSIGNING <cell_color>.
+        <cell_color>-fname = good_cell-fieldname.
       ENDIF.
+      IF line_exists( er_data_changed->mt_inserted_rows[ row_id = good_cell-row_id ] ).
+        "line inserted: mark fields as green
+        <cell_color>-color-col = col_positive.
+      ELSE.
+        "line changed: mark fields as yellow
+        <cell_color>-color-col = col_total.
+      ENDIF.
+
+
       ASSIGN COMPONENT good_cell-fieldname OF STRUCTURE <edit_line> TO FIELD-SYMBOL(<value>).
       <value> = good_cell-value.
+
+
       zif_cute~unsaved_data = abap_true.
     ENDLOOP.
 
@@ -259,6 +285,33 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
         zif_cute~save( ).
       WHEN OTHERS.
     ENDCASE.
+
+  ENDMETHOD.
+
+
+  METHOD set_key_fields_read_only.
+
+    FIELD-SYMBOLS <edit_data> TYPE table.
+    FIELD-SYMBOLS <edit_line> TYPE any.
+    FIELD-SYMBOLS <style> TYPE lvc_t_styl.
+    DATA cell_style TYPE lvc_s_styl.
+
+    DATA(edit_data) = zif_cute~table_helper->get_data_reference_edit( ).
+    ASSIGN edit_data->* TO <edit_data>.
+
+
+    LOOP AT <edit_data> ASSIGNING <edit_line>.
+      "assign color table
+      ASSIGN COMPONENT '_STYLE_' OF STRUCTURE <edit_line> TO <style>.
+      LOOP AT zif_cute~source_information->fieldinfos
+      INTO DATA(fieldinfo)
+      WHERE dfies-keyflag = abap_true
+        AND dfies-datatype <> 'CLNT'.
+        cell_style-fieldname = fieldinfo-fieldname.
+        cell_style-style     = cl_gui_alv_grid=>mc_style_disabled.
+        INSERT cell_style INTO TABLE <style>.
+      ENDLOOP.
+    ENDLOOP.
 
   ENDMETHOD.
 

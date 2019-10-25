@@ -83,6 +83,11 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
     TO components.
 
     APPEND VALUE #(
+      name = '_STYLE_'
+      type = CAST cl_abap_datadescr( cl_abap_structdescr=>describe_by_name( 'LVC_T_STYL' ) ) )
+    TO components.
+
+    APPEND VALUE #(
       name = '_COLOR_ROW_'
       type = CAST cl_abap_datadescr( cl_abap_elemdescr=>describe_by_name( 'CHAR04' ) ) )
     TO components.
@@ -164,13 +169,19 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
           DATA(field_info) = source_information->get_field_info( component-name ).
           IF field_info-cute-read_only = abap_false.
             IF field_info-dfies-keyflag = abap_true.
-              <field>-edit       = abap_false.
+              <field>-edit       = abap_true.
               <field>-fix_column = abap_true.
               <field>-key        = abap_true.
               <field>-emphasize  = 'C600'.
             ELSE.
               <field>-edit       = edit.
             ENDIF.
+          ENDIF.
+
+
+          IF field_info-cute-obligatory = abap_true.
+            "mark obligatory fields orange
+            <field>-emphasize  = 'C700'.
           ENDIF.
 
 
@@ -182,9 +193,14 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
               <field>-drdn_alias = 'X'.
               grid->set_drop_down_table(
                   it_drop_down_alias = zcl_cute_listbox_helper=>get_listbox_for_fix_values(
-                    handle  = <field>-drdn_hndl
-                    type    = field_info-cute-fieldtype
-                    domname = field_info-dfies-domname ) ).
+                    handle     = <field>-drdn_hndl
+                    type       = field_info-cute-fieldtype
+                    domname    = field_info-dfies-domname
+                    obligatory = field_info-cute-obligatory ) ).
+              IF field_info-cute-obligatory = abap_false.
+                "deactivate foreign key check to let user choose field initial
+                <field>-valexi = '!'.
+              ENDIF.
             WHEN 'IC'.
               <field>-icon = abap_true.
 
