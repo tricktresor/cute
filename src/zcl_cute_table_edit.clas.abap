@@ -63,6 +63,7 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
 
     DATA key_table TYPE STANDARD TABLE OF string.
     FIELD-SYMBOLS <color> TYPE lvc_t_scol.
+    FIELD-SYMBOLS <color_row> TYPE char04.
 
     LOOP AT <edit_data> ASSIGNING FIELD-SYMBOL(<edit_line>).
 
@@ -70,13 +71,13 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
       MOVE-CORRESPONDING <edit_line> TO <edit_key>.
 
       "assign color table
-      ASSIGN COMPONENT '_COLOR_' OF STRUCTURE <edit_line> TO <color>.
+      ASSIGN COMPONENT '_COLOR_ROW_' OF STRUCTURE <edit_line> TO <color_row>.
 
       "check key values
       READ TABLE key_table WITH KEY table_line = <edit_key> TRANSPORTING NO FIELDS.
       IF sy-subrc > 0.
         APPEND <edit_key> TO key_table.
-        DELETE <color> WHERE fname = space.
+        CLEAR <color_row>.
       ELSE.
         "more detailed information: if first of duplicate key has been changed, then
         "the 2nd line will be marked as duplicate. the changed line should be
@@ -84,23 +85,15 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
         zcl_cute_todo=>beautify( 'maybe derive detailed information about wrong part of the key and line' ).
         errors_exist = abap_true.
         "color duplicate line RED
-        READ TABLE <color> INDEX 1 ASSIGNING FIELD-SYMBOL(<col>).
-        IF sy-subrc = 0.
-          <col>-color-col = col_negative.
-          <col>-color-int = 1.
-        ELSE.
-          INSERT VALUE #( color-col = 0 color-int = 1 ) INTO TABLE <color>.
-        ENDIF.
+        <color_row> = 'C600'. "red
       ENDIF.
     ENDLOOP.
 
     IF errors_exist = abap_true.
       "display colors
-      zcl_cute_todo=>bug( 'colors will only be displayed after 2nd check' ).
       grid->refresh_table_display(
         i_soft_refresh = abap_false
         is_stable = VALUE #( col = abap_true row = abap_true ) ).
-
       RAISE EXCEPTION TYPE zcx_cute_data_duplicate_keys.
     ENDIF.
 
@@ -149,6 +142,7 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
 
     DATA layout TYPE lvc_s_layo.
     layout-ctab_fname = '_COLOR_'.
+    layout-info_fname = '_COLOR_ROW_'.
 
     DATA(fcat) = zif_cute~table_helper->get_field_catalog(
       grid = grid
@@ -219,6 +213,9 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     LOOP AT er_data_changed->mt_good_cells INTO DATA(good_cell).
       DATA(field_info) = zif_cute~source_information->get_field_info( good_cell-fieldname ).
       READ TABLE <edit_data> ASSIGNING FIELD-SYMBOL(<edit_line>) INDEX good_cell-row_id.
+      IF sy-subrc > 0.
+        INSERT INITIAL LINE INTO TABLE <edit_data> ASSIGNING <edit_line>.
+      ENDIF.
       ASSIGN COMPONENT good_cell-fieldname OF STRUCTURE <edit_line> TO FIELD-SYMBOL(<value>).
       <value> = good_cell-value.
       zif_cute~unsaved_data = abap_true.
@@ -227,7 +224,7 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     TRY.
         check_keys( ).
       CATCH zcx_cute_data_duplicate_keys.
-        MESSAGE e001 DISPLAY LIKE 'I'.
+        MESSAGE i001.
     ENDTRY.
 
   ENDMETHOD.

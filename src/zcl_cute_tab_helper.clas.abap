@@ -82,6 +82,11 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
       type = CAST cl_abap_datadescr( cl_abap_structdescr=>describe_by_name( 'LVC_T_SCOL' ) ) )
     TO components.
 
+    APPEND VALUE #(
+      name = '_COLOR_ROW_'
+      type = CAST cl_abap_datadescr( cl_abap_elemdescr=>describe_by_name( 'CHAR04' ) ) )
+    TO components.
+
     "get dictionary info for fields to identify keys
     DATA(fields) = struc_origin_descr->get_ddic_field_list( ).
 
@@ -158,8 +163,16 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
 
           DATA(field_info) = source_information->get_field_info( component-name ).
           IF field_info-cute-read_only = abap_false.
-            <field>-edit      = edit.
+            IF field_info-dfies-keyflag = abap_true.
+              <field>-edit       = abap_false.
+              <field>-fix_column = abap_true.
+              <field>-key        = abap_true.
+              <field>-emphasize  = 'C600'.
+            ELSE.
+              <field>-edit       = edit.
+            ENDIF.
           ENDIF.
+
 
           CASE field_info-cute-fieldtype.
             WHEN 'CB'.
