@@ -12,6 +12,15 @@ private section.
   data SPLITTER type ref to CL_GUI_EASY_SPLITTER_CONTAINER .
   data ERRORS_EXIST type FLAG .
 
+  methods SET_UPDATE_FLAG
+    importing
+      !FLAG type UPDKZ_D
+    changing
+      !LINE type ANY .
+  methods PROCESS_DELETED_DATA
+    importing
+      !ER_DATA_CHANGED type ref to CL_ALV_CHANGED_DATA_PROTOCOL .
+  methods REFRESH .
   methods SET_KEY_FIELDS_READ_ONLY .
   methods EDIT_GRID .
   methods GRID_EXCLUDED_FUNCTIONS
@@ -43,6 +52,12 @@ private section.
   methods CHECK_KEYS
     raising
       ZCX_CUTE_DATA_DUPLICATE_KEYS .
+  methods PROCESS_INSERTED_DATA
+    importing
+      !ER_DATA_CHANGED type ref to CL_ALV_CHANGED_DATA_PROTOCOL .
+  methods PROCESS_CHANGED_DATA
+    importing
+      !ER_DATA_CHANGED type ref to CL_ALV_CHANGED_DATA_PROTOCOL .
 ENDCLASS.
 
 
@@ -91,9 +106,6 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
 
     IF errors_exist = abap_true.
       "display colors
-      grid->refresh_table_display(
-        i_soft_refresh = abap_false
-        is_stable = VALUE #( col = abap_true row = abap_true ) ).
       RAISE EXCEPTION TYPE zcx_cute_data_duplicate_keys.
     ENDIF.
 
@@ -131,6 +143,7 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
          i_appl_events     = ' ' ).
 
     IF zif_cute~authorized_to-maintain = abap_true.
+      "editable
       grid->register_edit_event( cl_gui_alv_grid=>mc_evt_enter ).
       grid->set_ready_for_input( 1 ).
       SET HANDLER handle_data_changed FOR grid.
@@ -140,17 +153,21 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     SET HANDLER handle_after_user_command FOR grid.
     SET HANDLER handle_toolbar            FOR grid.
 
+    "layout settings
     DATA layout TYPE lvc_s_layo.
     layout-ctab_fname = '_COLOR_'.
     layout-stylefname = '_STYLE_'.
     layout-info_fname = '_COLOR_ROW_'.
 
+    "Fieldcatalog
     DATA(fcat) = zif_cute~table_helper->get_field_catalog(
       grid = grid
       edit = zif_cute~authorized_to-maintain ).
 
+    "layout settings for key values
     set_key_fields_read_only( ).
 
+    "display grid
     grid->set_table_for_first_display(
       EXPORTING
         is_variant                    = VALUE #( handle = 'GRID' report = sy-repid username = sy-uname )
@@ -167,6 +184,7 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
         too_many_lines                = 3
         OTHERS                        = 4  ).
     IF sy-subrc = 0.
+      "Change toolbar
       grid->set_toolbar_interactive( ).
     ENDIF.
 
@@ -193,6 +211,7 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
       WHEN '&CHECK'.
         TRY.
             check_keys( ).
+            refresh( ).
           CATCH zcx_cute_data.
             MESSAGE 'Duplicate keys; please check!' TYPE 'I'.
         ENDTRY.
@@ -207,51 +226,19 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     AND   e_onf4_after IS INITIAL
     AND   e_onf4_before IS INITIAL.
 
-    FIELD-SYMBOLS <color> TYPE lvc_t_scol.
-    FIELD-SYMBOLS <cell_color> TYPE lvc_s_scol.
-    FIELD-SYMBOLS <edit_data> TYPE table.
-    FIELD-SYMBOLS <edit_line> TYPE any.
 
-
-    DATA(edit_data) = zif_cute~table_helper->get_data_reference_edit( ).
-    ASSIGN edit_data->* TO <edit_data>.
-
-    LOOP AT er_data_changed->mt_inserted_rows INTO DATA(rowins).
-      INSERT INITIAL LINE INTO <edit_data> ASSIGNING <edit_line> INDEX rowins-row_id.
-    ENDLOOP.
-
-    LOOP AT er_data_changed->mt_good_cells INTO DATA(good_cell).
-      DATA(field_info) = zif_cute~source_information->get_field_info( good_cell-fieldname ).
-      READ TABLE <edit_data> ASSIGNING <edit_line> INDEX good_cell-row_id.
-
-      "assign color table
-      ASSIGN COMPONENT '_COLOR_' OF STRUCTURE <edit_line> TO <color>.
-      READ TABLE <color> ASSIGNING <cell_color> WITH KEY fname = good_cell-fieldname.
-      IF sy-subrc > 0.
-        INSERT INITIAL LINE INTO TABLE <color> ASSIGNING <cell_color>.
-        <cell_color>-fname = good_cell-fieldname.
-      ENDIF.
-      IF line_exists( er_data_changed->mt_inserted_rows[ row_id = good_cell-row_id ] ).
-        "line inserted: mark fields as green
-        <cell_color>-color-col = col_positive.
-      ELSE.
-        "line changed: mark fields as yellow
-        <cell_color>-color-col = col_total.
-      ENDIF.
-
-
-      ASSIGN COMPONENT good_cell-fieldname OF STRUCTURE <edit_line> TO FIELD-SYMBOL(<value>).
-      <value> = good_cell-value.
-
-
-      zif_cute~unsaved_data = abap_true.
-    ENDLOOP.
+    process_deleted_data( er_data_changed ).
+    process_inserted_data( er_data_changed ).
+    process_changed_data( er_data_changed ).
 
     TRY.
         check_keys( ).
       CATCH zcx_cute_data_duplicate_keys.
         MESSAGE i001.
     ENDTRY.
+
+    "activate color settings
+    refresh( ).
 
   ENDMETHOD.
 
@@ -289,6 +276,116 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD process_changed_data.
+
+    FIELD-SYMBOLS <style> TYPE lvc_t_styl.
+    DATA cell_style TYPE lvc_s_styl.
+    FIELD-SYMBOLS <cell_style> TYPE lvc_s_styl.
+    FIELD-SYMBOLS <color> TYPE lvc_t_scol.
+    FIELD-SYMBOLS <cell_color> TYPE lvc_s_scol.
+    FIELD-SYMBOLS <edit_data> TYPE table.
+    FIELD-SYMBOLS <edit_line> TYPE any.
+    FIELD-SYMBOLS <color_row> TYPE char04.
+
+
+    DATA(edit_data) = zif_cute~table_helper->get_data_reference_edit( ).
+    ASSIGN edit_data->* TO <edit_data>.
+
+    LOOP AT er_data_changed->mt_good_cells INTO DATA(good_cell).
+      DATA(field_info) = zif_cute~source_information->get_field_info( good_cell-fieldname ).
+      READ TABLE <edit_data> ASSIGNING <edit_line> INDEX good_cell-row_id.
+
+      set_update_flag(
+        EXPORTING
+          flag = zcl_cute_tab_helper=>line_changed
+        CHANGING
+          line = <edit_line> ).
+
+      "assign color table
+      ASSIGN COMPONENT '_COLOR_' OF STRUCTURE <edit_line> TO <color>.
+      READ TABLE <color> ASSIGNING <cell_color> WITH KEY fname = good_cell-fieldname.
+      IF sy-subrc > 0.
+        INSERT INITIAL LINE INTO TABLE <color> ASSIGNING <cell_color>.
+        <cell_color>-fname = good_cell-fieldname.
+      ENDIF.
+      IF line_exists( er_data_changed->mt_inserted_rows[ row_id = good_cell-row_id ] ).
+        "line inserted: mark fields as green
+        <cell_color>-color-col = col_positive.
+      ELSE.
+        "line changed: mark fields as yellow
+        <cell_color>-color-col = col_total.
+      ENDIF.
+
+      ASSIGN COMPONENT good_cell-fieldname OF STRUCTURE <edit_line> TO FIELD-SYMBOL(<value>).
+      <value> = good_cell-value.
+      zif_cute~unsaved_data = abap_true.
+    ENDLOOP.
+
+  ENDMETHOD.
+
+
+  METHOD PROCESS_DELETED_DATA.
+
+    FIELD-SYMBOLS <edit_data> TYPE table.
+    FIELD-SYMBOLS <edit_line> TYPE any.
+
+    DATA(edit_data) = zif_cute~table_helper->get_data_reference_edit( ).
+    ASSIGN edit_data->* TO <edit_data>.
+
+    LOOP AT er_data_changed->mt_deleted_rows INTO DATA(rowdel).
+      zif_cute~unsaved_data = abap_true.
+*      "set update flag
+*      READ TABLE <edit_data> ASSIGNING <edit_line> INDEX rowdel-row_id.
+*      ASSIGN COMPONENT '_UPDKZ_' OF STRUCTURE <edit_line> TO <updkz>.
+*      <updkz> = zcl_cute_tab_helper=>line_deleted.
+*      "set style DISABLED
+*      ASSIGN COMPONENT '_STYLE_' OF STRUCTURE <edit_line> TO <style>.
+*      READ TABLE <style> WITH KEY fieldname = space ASSIGNING <cell_style>.
+*      IF sy-subrc = 0.
+*        <cell_style>-style = alv_style_disabled + alv_style_no_delete_row.
+*      ELSE.
+*        cell_style-fieldname = space.
+*        cell_style-style     = alv_style_disabled + alv_style_no_delete_row.
+*        INSERT cell_style INTO TABLE <style>.
+*      ENDIF.
+*      "mark deletion red
+*      ASSIGN COMPONENT '_COLOR_ROW_' OF STRUCTURE <edit_line> TO <color_row>.
+*      <color_row> = 'C711'.
+    ENDLOOP.
+
+
+  ENDMETHOD.
+
+
+  METHOD process_inserted_data.
+
+    FIELD-SYMBOLS <edit_data> TYPE table.
+    FIELD-SYMBOLS <edit_line> TYPE any.
+
+    DATA(edit_data) = zif_cute~table_helper->get_data_reference_edit( ).
+    ASSIGN edit_data->* TO <edit_data>.
+
+    LOOP AT er_data_changed->mt_inserted_rows INTO DATA(rowins).
+      INSERT INITIAL LINE INTO <edit_data> ASSIGNING <edit_line> INDEX rowins-row_id.
+      set_update_flag(
+        EXPORTING
+          flag = zcl_cute_tab_helper=>line_inserted
+        CHANGING
+          line = <edit_line> ).
+    ENDLOOP.
+
+  ENDMETHOD.
+
+
+  METHOD refresh.
+
+    grid->refresh_table_display(
+      i_soft_refresh = abap_true
+      is_stable = VALUE #( col = abap_true row = abap_true ) ).
+
+  ENDMETHOD.
+
+
   METHOD set_key_fields_read_only.
 
     FIELD-SYMBOLS <edit_data> TYPE table.
@@ -312,6 +409,14 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
         INSERT cell_style INTO TABLE <style>.
       ENDLOOP.
     ENDLOOP.
+
+  ENDMETHOD.
+
+
+  METHOD set_update_flag.
+
+    ASSIGN COMPONENT '_UPDKZ_' OF STRUCTURE line TO FIELD-SYMBOL(<updkz>).
+    <updkz> = flag.
 
   ENDMETHOD.
 

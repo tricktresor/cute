@@ -5,6 +5,11 @@ class ZCL_CUTE_TAB_HELPER definition
 
 public section.
 
+  constants LINE_DELETED type UPDKZ_D value 'D' ##NO_TEXT.
+  constants LINE_INSERTED type UPDKZ_D value 'I' ##NO_TEXT.
+  constants LINE_CHANGED type UPDKZ_D value 'U' ##NO_TEXT.
+  constants LINE_UNCHANGED type UPDKZ_D value ' ' ##NO_TEXT.
+
   class-methods GET_INSTANCE
     importing
       !SOURCE_INFO type ref to ZIF_CUTE_SOURCE_INFO
@@ -90,6 +95,11 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
     APPEND VALUE #(
       name = '_COLOR_ROW_'
       type = CAST cl_abap_datadescr( cl_abap_elemdescr=>describe_by_name( 'CHAR04' ) ) )
+    TO components.
+
+    APPEND VALUE #(
+      name = '_UPDKZ_'
+      type = CAST cl_abap_datadescr( cl_abap_elemdescr=>describe_by_name( 'UPDKZ_D' ) ) )
     TO components.
 
     "get dictionary info for fields to identify keys
@@ -178,6 +188,11 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
             ENDIF.
           ENDIF.
 
+          CASE <field>-fieldname.
+            WHEN '_UPDKZ_'.
+              "do not display internal update flag
+              <field>-tech = abap_true.
+          ENDCASE.
 
           IF field_info-cute-obligatory = abap_true.
             "mark obligatory fields orange
@@ -187,8 +202,10 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
 
           CASE field_info-cute-fieldtype.
             WHEN 'CB'.
+              "set checkbox
               <field>-checkbox = abap_true.
             WHEN 'LK' OR 'LT' OR 'LB'.
+              "set listbox
               <field>-drdn_hndl  = field_info-dfies-position.
               <field>-drdn_alias = 'X'.
               grid->set_drop_down_table(
