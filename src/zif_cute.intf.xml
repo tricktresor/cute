@@ -61,6 +61,18 @@
     </SEOCOMPOTX>
     <SEOCOMPOTX>
      <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>SELECTION</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Show selection screen if needed</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
+     <CMPNAME>SELECTION_SCREEN</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>CUTE - selection screen</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_CUTE</CLSNAME>
      <CMPNAME>SET_SOURCE</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Set name of source (table or view)</DESCRIPT>

@@ -20,6 +20,18 @@
      <MSGNR>001</MSGNR>
      <TEXT>data error: duplicate keys</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZCUTE</ARBGB>
+     <MSGNR>004</MSGNR>
+     <TEXT>No authorization for table &amp;.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZCUTE</ARBGB>
+     <MSGNR>005</MSGNR>
+     <TEXT>Selection cancelled.</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

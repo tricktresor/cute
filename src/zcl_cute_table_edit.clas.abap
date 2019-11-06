@@ -448,8 +448,9 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD ZIF_CUTE~CHECK_INPUT.
+  METHOD zif_cute~check_input.
 
+    CHECK grid IS BOUND.
     grid->check_changed_data( IMPORTING e_valid = valid ).
 
   ENDMETHOD.
@@ -466,9 +467,16 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     zif_cute~table_helper = zcl_cute_tab_helper=>get_instance( zif_cute~source_information ).
     TRY.
         zif_cute~check_authority( ).
+        zif_cute~selection( ).
         zif_cute~read( ).
         edit_grid( ).
       CATCH zcx_cute_not_authorized.
+        "Authorization failed
+        MESSAGE i004 WITH zif_cute~source_information->name.
+        RETURN.
+      CATCH zcx_cute_selection_screen.
+        "Selection cancelled
+        MESSAGE i005.
         RETURN.
     ENDTRY.
 
@@ -518,8 +526,11 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     DATA(tabref) = zif_cute~table_helper->get_data_reference_origin( ).
     ASSIGN tabref->* TO <table>.
 
+    DATA(where_tab) = zif_cute~selection_screen->get_where_clause( ).
+
     SELECT * FROM (zif_cute~source_information->name)
-      INTO TABLE <table>.
+      INTO TABLE <table>
+      WHERE (where_tab).
 
     zif_cute~map_origin_to_edit( ).
 
@@ -559,6 +570,16 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
     ENDIF.
 
 
+  ENDMETHOD.
+
+
+  METHOD zif_cute~selection.
+*    TRY.
+        zif_cute~selection_screen = zcl_cute_selection_screen=>get_instance( zif_cute~source_information ).
+        zif_cute~selection_screen->show( ).
+*      CATCH zcx_cute_selection_screen.
+*        RAISE EXCEPTION TYPE zcx_cute_selection_screen.
+*    ENDTRY.
   ENDMETHOD.
 
 

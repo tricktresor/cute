@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_DTEL" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <DD04V>
+    <ROLLNAME>ZCUTE_TEST_FIELD_FOREIGN_KEY</ROLLNAME>
+    <DDLANGUAGE>E</DDLANGUAGE>
+    <DOMNAME>XUBNAME</DOMNAME>
+    <HEADLEN>12</HEADLEN>
+    <SCRLEN1>10</SCRLEN1>
+    <SCRLEN2>20</SCRLEN2>
+    <SCRLEN3>40</SCRLEN3>
+    <DDTEXT>CUTE Test: field with foreign key value</DDTEXT>
+    <REPTEXT>Foreign Key</REPTEXT>
+    <SCRTEXT_S>Forgn Key</SCRTEXT_S>
+    <SCRTEXT_M>Foreign Key</SCRTEXT_M>
+    <SCRTEXT_L>CUTE Foreign Key</SCRTEXT_L>
+    <DTELMASTER>E</DTELMASTER>
+    <DEFFDNAME>FIELD_FOREIGN_KEY</DEFFDNAME>
+    <REFKIND>D</REFKIND>
+   </DD04V>
+  </asx:values>
+ </asx:abap>
+</abapGit>

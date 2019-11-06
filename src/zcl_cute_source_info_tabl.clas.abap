@@ -1,16 +1,18 @@
-class ZCL_CUTE_SOURCE_INFO_TABL definition
-  public
-  final
-  create public .
+CLASS zcl_cute_source_info_tabl DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
 
-public section.
+  PUBLIC SECTION.
 
-  interfaces ZIF_CUTE_SOURCE_INFO .
+    INTERFACES zif_cute_source_info .
 
-  data HEADER type DD02V .
-  data TECHNICAL type DD09V .
-  data:
-    components TYPE STANDARD TABLE OF dd03p .
+    DATA header TYPE dd02v .
+    DATA technical TYPE dd09v .
+    DATA:
+      components TYPE STANDARD TABLE OF dd03p WITH DEFAULT KEY.
+protected section.
+private section.
 ENDCLASS.
 
 
@@ -22,7 +24,8 @@ CLASS ZCL_CUTE_SOURCE_INFO_TABL IMPLEMENTATION.
 
     DATA dfies_table TYPE STANDARD TABLE OF dfies.
 
-    READ TABLE zif_cute_source_info~fieldinfos WITH TABLE KEY fieldname = fieldname INTO fieldinfo.
+    READ TABLE zif_cute_source_info~fieldinfos
+    WITH TABLE KEY fieldname = fieldname INTO fieldinfo.
     IF sy-subrc > 0.
       fieldinfo-fieldname = fieldname.
 
@@ -89,6 +92,11 @@ CLASS ZCL_CUTE_SOURCE_INFO_TABL IMPLEMENTATION.
         OTHERS        = 2.
     IF sy-subrc > 0.
       RAISE EXCEPTION TYPE zcx_cute_get_type.
+    ELSE.
+      sort components by position.
+      LOOP AT components INTO DATA(component).
+        zif_cute_source_info~get_field_info( component-fieldname ).
+      ENDLOOP.
     ENDIF.
 
   ENDMETHOD.
