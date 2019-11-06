@@ -12,24 +12,24 @@ public section.
       !I_REQUEST type E071-TRKORR optional
       !I_TASK type E071-TRKORR optional .
   PROTECTED SECTION.
-private section.
+PRIVATE SECTION.
 
-  data REQUEST type E071-TRKORR .
-  data TASK type E071-TRKORR .
-  data:
+  DATA request TYPE e071-trkorr .
+  DATA task TYPE e071-trkorr .
+  DATA:
     e071_entries TYPE TABLE OF e071 .
-  data:
+  DATA:
     e071k_entries TYPE TABLE OF e071k .
-  data KO200 type KO200 .
+  DATA ko200 TYPE ko200 .
 
-  methods VALIDATE_INPUT
-    importing
-      !TABLE_NAME type TABNAME
-      !TABLE_KEY type TROBJ_NAME
-    raising
-      ZCX_CUTE_NO_REQUEST
-      ZCX_CUTE_TABLE_DOES_NOT_EXIST
-      ZCX_CUTE_KEY_NOT_VALID .
+  METHODS validate_input
+    IMPORTING
+      !table_name TYPE tabname
+      !table_key  TYPE trobj_name
+    RAISING
+      zcx_cute_transport_no_request
+      zcx_cute_transport_not_exist
+      zcx_cute_transport_invalid_key.
 ENDCLASS.
 
 
@@ -47,15 +47,18 @@ CLASS ZCL_CUTE_CUSTOMIZING_REQUEST IMPLEMENTATION.
     DATA subrc LIKE sy-subrc.
 
     IF request IS INITIAL AND task IS INITIAL.
-      RAISE EXCEPTION TYPE zcx_cute_no_request.
+      RAISE EXCEPTION TYPE zcx_cute_transport_no_request.
     ENDIF.
     " another check if the table does exist in DDIC will come later
     IF table_name IS INITIAL.
-      RAISE EXCEPTION TYPE zcx_cute_table_does_not_exist.
+      RAISE EXCEPTION TYPE zcx_cute_transport_not_exist
+        EXPORTING
+          object   = 'R3TR-TABL'
+          obj_name = `missing`.
     ENDIF.
     " another check if the key is more or less valid to the table key will come later ( empty key is not valid ^^ )
     IF table_key IS INITIAL.
-      RAISE EXCEPTION TYPE zcx_cute_key_not_valid.
+      RAISE EXCEPTION TYPE zcx_cute_transport_invalid_key.
     ENDIF.
 
     CALL FUNCTION 'DB_EXISTS_TABLE'
@@ -65,7 +68,11 @@ CLASS ZCL_CUTE_CUSTOMIZING_REQUEST IMPLEMENTATION.
         subrc   = subrc.
 
     IF subrc <> 0.
-      RAISE EXCEPTION TYPE zcx_cute_table_does_not_exist.
+      RAISE EXCEPTION TYPE zcx_cute_transport_not_exist
+        EXPORTING
+          object   = 'TABL'
+          obj_name = CONV #( table_name ).
+
     ENDIF.
 
   ENDMETHOD.
