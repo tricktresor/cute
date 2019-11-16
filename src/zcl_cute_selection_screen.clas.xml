@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_CUTE_SELECTION_SCREEN</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>CUTE - selection screen</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </VSEOCLASS>
+   <TPOOL>
+    <item>
+     <ID>I</ID>
+     <KEY>001</KEY>
+     <ENTRY>Selection</ENTRY>
+     <LENGTH>19</LENGTH>
+    </item>
+   </TPOOL>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_CUTE_SELECTION_SCREEN</CLSNAME>
+     <CMPNAME>CONSTRUCTOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>CONSTRUCTOR</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_CUTE_SELECTION_SCREEN</CLSNAME>
+     <CMPNAME>GET_INSTANCE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Get instance for table/view</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_CUTE_SELECTION_SCREEN</CLSNAME>
+     <CMPNAME>GET_WHERE_CLAUSE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Get where clause for table</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_CUTE_SELECTION_SCREEN</CLSNAME>
+     <CMPNAME>INIT</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Iinitialize free selections</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_CUTE_SELECTION_SCREEN</CLSNAME>
+     <CMPNAME>SELECTIONS_ID</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Dynamic selection ID</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_CUTE_SELECTION_SCREEN</CLSNAME>
+     <CMPNAME>SHOW</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Show free selections dialog</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_CUTE_SELECTION_SCREEN</CLSNAME>
+     <CMPNAME>SOURCE_INFO</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>CUTE - Source Information</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_CUTE_SELECTION_SCREEN</CLSNAME>
+     <CMPNAME>SOURCE_NAME</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>OLE type information</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

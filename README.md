@@ -9,6 +9,12 @@ Table maintenance in SAP systems is mainly done via generated table maintenance 
 
 https://blogs.sap.com/2019/10/15/replacing-the-good-old-maintenance-view-generator/
 
+# dependencies
+
+project dodo for displaying the documentation of edited table in docking container
+
+https://github.com/tricktresor/dodo
+
 # planned features
 
 * simple use without any generations needed
