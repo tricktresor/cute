@@ -11,6 +11,8 @@ private section.
   data GRID type ref to CL_GUI_ALV_GRID .
   data SPLITTER type ref to CL_GUI_EASY_SPLITTER_CONTAINER .
   data ERRORS_EXIST type FLAG .
+  data TEXT_TABLE_HELPER type ref to ZCL_CUTE_TAB_HELPER .
+  data TEXT_TABLE_INFO type ref to ZIF_CUTE_SOURCE_INFO .
 
   methods CHECK_KEYS
     raising
@@ -465,6 +467,7 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
   METHOD zif_cute~edit.
 
     zif_cute~table_helper = zcl_cute_tab_helper=>get_instance( zif_cute~source_information ).
+
     TRY.
         zif_cute~check_authority( ).
         zif_cute~selection( ).
@@ -590,7 +593,15 @@ CLASS ZCL_CUTE_TABLE_EDIT IMPLEMENTATION.
 
   METHOD zif_cute~set_source.
 
+    "set source info
     zif_cute~source_information = source_info.
+
+    "text table?
+    DATA(texttable) = source_info->get_text_table( ).
+    IF texttable IS NOT INITIAL.
+      text_table_info   = zcl_cute_source_information=>get_instance( texttable-name ).
+      text_table_helper = zcl_cute_tab_helper=>get_instance( text_table_info ).
+    ENDIF.
 
   ENDMETHOD.
 

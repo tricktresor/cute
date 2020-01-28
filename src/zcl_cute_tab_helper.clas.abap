@@ -5,9 +5,9 @@ class ZCL_CUTE_TAB_HELPER definition
 
 public section.
 
+  constants LINE_CHANGED type UPDKZ_D value 'U' ##NO_TEXT.
   constants LINE_DELETED type UPDKZ_D value 'D' ##NO_TEXT.
   constants LINE_INSERTED type UPDKZ_D value 'I' ##NO_TEXT.
-  constants LINE_CHANGED type UPDKZ_D value 'U' ##NO_TEXT.
   constants LINE_UNCHANGED type UPDKZ_D value ' ' ##NO_TEXT.
 
   class-methods GET_INSTANCE
@@ -43,8 +43,7 @@ protected section.
 private section.
 
   data COMPONENTS type CL_ABAP_STRUCTDESCR=>COMPONENT_TABLE .
-  data:
-    fields TYPE DDFIELDS.
+  data FIELDS type DDFIELDS .
   data:
     keyfields TYPE TABLE OF fieldname WITH DEFAULT KEY .
   data SOURCE_INFORMATION type ref to ZIF_CUTE_SOURCE_INFO .
@@ -68,6 +67,7 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
   METHOD create.
 
     DATA key_components TYPE cl_abap_structdescr=>component_table.
+    DATA last_was_a_key_field TYPE flag.
 
     struc_origin_descr = CAST cl_abap_structdescr( cl_abap_structdescr=>describe_by_name( source_information->name ) ).
 
@@ -109,13 +109,35 @@ CLASS ZCL_CUTE_TAB_HELPER IMPLEMENTATION.
     "get field information (DFIES) and key flag
     DATA element TYPE REF TO cl_abap_elemdescr.
     LOOP AT components INTO DATA(component).
+      DATA(tabix) = sy-tabix.
       READ TABLE fields
       WITH KEY fieldname = component-name
       INTO DATA(fieldinfo).
-      IF sy-subrc = 0 AND fieldinfo-keyflag = abap_true AND fieldinfo-datatype <> 'CLNT'.
-        APPEND component-name TO keyfields.
-        INSERT component INTO TABLE key_components.
+      CHECK sy-subrc = 0.
+      IF fieldinfo-keyflag = abap_true.
+        IF fieldinfo-datatype = 'CLNT'.
+          "We don't want to have the field "client"
+          DELETE components WHERE name = fieldinfo-fieldname.
+          CONTINUE.
+        ELSE.
+          "add all other keyfields to key fields
+          APPEND component-name TO keyfields.
+          INSERT component INTO TABLE key_components.
+          last_was_a_key_field = abap_true.
+        ENDIF.
+      ELSEIF last_was_a_key_field = abap_true.
+        "insert description from text table here
+        DATA(texttable) = source_information->get_text_table( ).
+        IF texttable-description IS NOT INITIAL.
+          last_was_a_key_field = abap_false.
+          INSERT VALUE #(
+            name = '_DESCRIPTION'
+            type = CAST cl_abap_datadescr( cl_abap_elemdescr=>describe_by_name( texttable-description-rollname ) ) )
+          INTO components INDEX tabix.
+        ENDIF.
       ENDIF.
+
+
     ENDLOOP.
 
     "create structure for key

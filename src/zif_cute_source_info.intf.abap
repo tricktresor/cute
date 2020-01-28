@@ -12,6 +12,14 @@ interface ZIF_CUTE_SOURCE_INFO
     END OF ts_fieldinfo .
   types:
     tt_fieldinfos TYPE SORTED TABLE OF ts_fieldinfo WITH UNIQUE KEY fieldname WITH UNIQUE SORTED KEY position COMPONENTS dfies-position .
+  types:
+    BEGIN OF ts_texttable,
+      name      TYPE tabname,
+      description type dfies,
+      keyfields TYPE STANDARD TABLE OF fieldname WITH EMPTY KEY,
+    END OF ts_texttable .
+  types:
+    tt_texttables TYPE SORTED TABLE OF ts_texttable WITH UNIQUE KEY name .
 
   data NAME type TYPENAME .
   data CLASS type TABCLASS .
@@ -19,6 +27,7 @@ interface ZIF_CUTE_SOURCE_INFO
   data CUTE_TECH type ZCUTE_TECH .
   data:
     cute_fields TYPE SORTED TABLE OF zcute_field WITH UNIQUE KEY fieldname .
+  data TEXT_TABLES type TT_TEXTTABLES .
 
   methods READ
     importing
@@ -30,4 +39,10 @@ interface ZIF_CUTE_SOURCE_INFO
       !FIELDNAME type CLIKE
     returning
       value(FIELDINFO) type ZIF_CUTE_SOURCE_INFO=>TS_FIELDINFO .
+  methods DETERMINE_TEXT_TABLE .
+  methods GET_TEXT_TABLE
+    importing
+      !NAME type TABNAME optional
+    returning
+      value(TEXTTABLE) type TS_TEXTTABLE .
 endinterface.
