@@ -8,7 +8,7 @@ interface ZIF_CUTE_SOURCE_INFO
       dfies     TYPE dfies,
       catalog   TYPE lvc_s_fcat,
       cute      TYPE zcute_field,
-      domvalues TYPE dd07vtab,
+      domvalues TYPE dd07v_tab,
     END OF ts_fieldinfo .
   types:
     tt_fieldinfos TYPE SORTED TABLE OF ts_fieldinfo WITH UNIQUE KEY fieldname WITH UNIQUE SORTED KEY position COMPONENTS dfies-position .
